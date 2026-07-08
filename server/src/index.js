@@ -11,7 +11,23 @@ import { fileStore } from "./store.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 const SECRET = process.env.JWT_SECRET || "creative-upaay-demo-secret";
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
+const allowedOrigins = new Set([
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "https://creative-upaay-jaj6.vercel.app",
+  process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URLS || "").split(",").map((value) => value.trim()).filter(Boolean)
+]);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin) || origin.endsWith(".vercel.app")) return callback(null, true);
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 const bookingSchema = new mongoose.Schema({ id: { type: String, unique: true }, userId: String, showKey: String, movie: Object, theatre: Object, date: String, time: String, format: String, screen: String, seats: [String], subtotal: Number, bookingFee: Number, total: Number, status: String, paymentMethod: String, transactionDate: String, cancelledAt: String }, { versionKey: false });
